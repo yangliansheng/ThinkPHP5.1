@@ -1,0 +1,32 @@
+ThinkPHP5.1在拉取项目之后，可能会出现路由解析永远指向默认路由的问题。
+产生的原因如下：
+             1. nginx.conf配置造成的路由解析错误，路由配置如下
+                server {
+                    listen       80;//监听端口
+                    server_name  core.system.com;//本地域名
+
+                    #charset koi8-r;
+
+                    #access_log  logs/host.access.log  main;//接受日志
+                    root   "E:/GitProject/core.system.com/public";//项目入口地址
+                    location / { 
+                      if (!-e $request_filename) {//解析路由
+                        rewrite  ^(.*)$  /index.php?s=/$1  last;//路由重写
+                      }
+                       index   index.html index.php;//域名地址路由解析
+                    }
+                    try_files $uri /index.php?$query_string;//其他项目使用路由解析方式可去除
+                    location ~ \.php$ {
+                      fastcgi_connect_timeout 3s;     # default of 60s is just too long//链接超时时长
+                      fastcgi_read_timeout 10s;       # default of 60s is just too long//数据读取超时时长
+                      include fastcgi_params; //参数使用规则
+                      fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+                      fastcgi_pass 127.0.0.1:9000;    # assumes you are running php-fpm locally on port 9000//访问端口地址
+                    }
+                }
+              2.由于使用记事本编辑内容保存造成的自动编码携带的报文头BOM造成的路由解析失败，从而触发错误路由重定向指向默认路由，现象就是路由
+              无效仿佛永远都是指向默认路由，给出其他路由或者会报错误信息。解决方式如下：
+                
+                找到项目的模块控制器下的文件通过编辑工具去除UTF-8的BOM头保存，然后重新执行路由测试看是否解决问题。
+                
+           
